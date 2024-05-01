@@ -1,14 +1,14 @@
 "use client";
 
 import { PlusIcon } from "@radix-ui/react-icons";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import type { TcreateRoom } from "types";
 import { Dialog } from "ui";
+import type { TcreateRoom } from "types";
+import { postApiCreateRoom } from "@/routes";
 import InputField from "../../components/ui/InputField";
 
 function CreateRoom() {
@@ -26,9 +26,7 @@ function CreateRoom() {
     const name = data.name;
 
     try {
-      await axios.post("/api/createRoom", {
-        name: name.trim(),
-      });
+      await postApiCreateRoom({ name: name.trim() });
 
       setOpenModal(false);
       resetField("name");

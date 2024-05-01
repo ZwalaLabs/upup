@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "ui";
+import { Ama } from "@/routes";
 
 function Navbar() {
   const pathname = usePathname();
@@ -34,10 +35,7 @@ function Navbar() {
       </Link>
       <ul className="flex items-center justify-between gap-4">
         <li>
-          <Link
-            className="transition-colors hover:text-cyan-500 md:text-lg"
-            href="/ama"
-          >
+          <Ama.Link className="transition-colors hover:text-cyan-500 md:text-lg">
             <Button
               className={`rounded-lg p-2 font-bold underline-offset-4 hover:underline ${
                 pathname === "/ama" ? "underline" : ""
@@ -46,7 +44,7 @@ function Navbar() {
             >
               Join Room
             </Button>
-          </Link>
+          </Ama.Link>
         </li>
 
         {!isAuth ? (
