@@ -1,9 +1,8 @@
 import { Redis } from "ioredis";
-import { message as TMessage } from "types";
 import { v4 as uuidv4 } from "uuid";
 
-export class RedisPubSubManager {
-  private static instance: RedisPubSubManager; // singleton instance
+export class RedisClient {
+  private static instance: RedisClient; // singleton instance
   private subscriber: Redis; // subscribe to channels
   private publisher: Redis; // publish to channels. This is a separate instance from subscriber
   private subscriptions: Map<
@@ -11,7 +10,8 @@ export class RedisPubSubManager {
     { [room: string]: { room: string; upvoted: string[] } }
   >;
   // userId -> { room -> { room, upvoted } }
-  // eg, { 1: { room1: { room: room1, upvoted: ["message1", "message2"] }, room2: { room: room2, upvoted: ["message12"] } } }
+  // eg, { 1: { room1: { room: room1, upvoted: ["message1", "message2"] }, room2: { room: room2, upvoted:
+  // ["message12"] } } }
   private reverseSubscriptions: Map<
     string,
     { [userId: string]: { userId: string; ws: WebSocket } }
@@ -35,8 +35,6 @@ export class RedisPubSubManager {
 
     // forward message to all subscribers of the channel
     this.subscriber.on("message", (channel, message) => {
-      console.log(`Received ${message} from ${channel}`);
-
       const subscribers = this.reverseSubscriptions.get(channel) || {};
 
       Object.values(subscribers).forEach(({ ws }) => ws.send(message));
@@ -45,7 +43,7 @@ export class RedisPubSubManager {
 
   // This is a singleton class, so we don't want to allow multiple instances
   static getInstance() {
-    if (!this.instance) this.instance = new RedisPubSubManager();
+    if (!this.instance) this.instance = new RedisClient();
 
     return this.instance;
   }
@@ -54,13 +52,19 @@ export class RedisPubSubManager {
     // Add room to user's subscriptions
     this.subscriptions.set(userId, {
       ...(this.subscriptions.get(userId) || {}),
-      [room]: { room, upvoted: [] },
+      [room]: {
+        room,
+        upvoted: [],
+      },
     });
 
     // Add user to room's subscribers
     this.reverseSubscriptions.set(room, {
       ...(this.reverseSubscriptions.get(room) || {}),
-      [userId]: { userId, ws },
+      [userId]: {
+        userId,
+        ws,
+      },
     });
 
     // If this is the 1st subscriber to this room, subscribe to the room
@@ -79,6 +83,19 @@ export class RedisPubSubManager {
     }
   }
 
+  async sendMessage(room: string, message: string, sender: string) {
+    const payload = {
+      type: "message",
+      payload: {
+        id: uuidv4(),
+        sender,
+        message,
+        upvotes: 0,
+      },
+    };
+    this.publisher.publish(room, JSON.stringify(payload));
+  }
+
   unsubscribe(userId: string, room: string) {
     if (!userId || !room || !this.subscriptions.get(userId)) return;
 
@@ -92,65 +109,5 @@ export class RedisPubSubManager {
         this.subscriptions.delete(userId);
       }
     }
-
-    // Remove user from room's subscribers
-    delete this.reverseSubscriptions.get(room)?.[userId];
-
-    // If room has no more subscribers, unsubscribe from it
-    if (
-      !this.reverseSubscriptions.get(room) ||
-      Object.keys(this.reverseSubscriptions.get(room) || {}).length === 0
-    ) {
-      console.log("unsubscribing from " + room);
-      this.subscriber.unsubscribe(room);
-      this.reverseSubscriptions.delete(room);
-    }
-
-    console.log({
-      subs: this.subscriptions,
-      revSubs: this.reverseSubscriptions,
-    });
-  }
-
-  async sendMessage(room: string, message: string, sender: string) {
-    this.publish(room, {
-      type: "message",
-      payload: {
-        id: uuidv4(),
-        sender,
-        message,
-        upvotes: 0,
-      },
-    });
-  }
-
-  async upvoteMessage(room: string, userId: string, messageId: string) {
-    const userSubscriptions = this.subscriptions.get(userId);
-    if (!userSubscriptions) return;
-
-    if (userSubscriptions[room].upvoted.includes(messageId)) return;
-
-    userSubscriptions[room].upvoted.push(messageId);
-
-    this.publish(room, {
-      type: "upvote",
-      payload: {
-        message: messageId,
-      },
-    });
-  }
-
-  async clearMessage(room: string, messageId: string) {
-    this.publish(room, {
-      type: "clear",
-      payload: {
-        message: messageId,
-      },
-    });
-  }
-
-  publish(room: string, message: TMessage) {
-    console.log(`publishing message to ${room}`);
-    this.publisher.publish(room, JSON.stringify(message));
   }
 }

@@ -47,6 +47,8 @@ function AmaApplication({
     webSocket.onmessage = (event: MessageEvent<string>) => {
       const data = JSON.parse(event.data) as message;
 
+      console.log({ data });
+
       if (data.type === "message")
         setMessages((prev) => handleRecMessage(prev, data));
 

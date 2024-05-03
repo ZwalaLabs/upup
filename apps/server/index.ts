@@ -3,23 +3,22 @@ import http from "http";
 import { message } from "types";
 import { v4 as uuidv4 } from "uuid";
 import { WebSocketServer } from "ws";
-import { RedisPubSubManager } from "./RedisClient";
+import { RedisClient } from "./RedisClient";
 
 const app = express();
 const port = 8080;
-
 const server = http.createServer(app);
 
 const wss = new WebSocketServer({
   server,
   verifyClient: (info, done) => {
-    if (
-      info.origin === "http://localhost:3000" ||
-      (info.origin === "https://upupapp.xyz" && info.secure)
-    )
-      return done(true);
+    // if (
+    //   info.origin === "http://localhost:3002" ||
+    //   (info.origin === "https://upupapp.xyz" && info.secure)
+    // )
+    return done(true);
 
-    return done(false, 401, "Unauthorized Origin");
+    // return done(false, 401, "Unauthorized Origin");
   },
 });
 
@@ -42,7 +41,7 @@ wss.on("connection", async (ws) => {
         room: data.payload.roomId,
       };
 
-      RedisPubSubManager.getInstance().subscribe(
+      RedisClient.getInstance().subscribe(
         wsId.toString(),
         data.payload.roomId,
         ws,
@@ -60,8 +59,7 @@ wss.on("connection", async (ws) => {
       const sender = payload.sender;
       if (!message || !sender) return;
 
-      // publish message to redis channel
-      RedisPubSubManager.getInstance().sendMessage(roomId, message, sender);
+      RedisClient.getInstance().sendMessage(roomId, message, sender);
     }
 
     // handle upvote
@@ -71,13 +69,6 @@ wss.on("connection", async (ws) => {
 
       const messageId = payload.message;
       if (!messageId) return;
-
-      // publish upvote to redis channel
-      RedisPubSubManager.getInstance().upvoteMessage(
-        roomId,
-        wsId.toString(),
-        messageId,
-      );
     }
 
     // handle clear
@@ -87,14 +78,11 @@ wss.on("connection", async (ws) => {
 
       const messageId = data.payload.message;
       if (!messageId) return;
-
-      // clear message from redis channel
-      RedisPubSubManager.getInstance().clearMessage(roomId, messageId);
     }
   });
 
   ws.on("close", () => {
-    RedisPubSubManager.getInstance().unsubscribe(wsId, users[wsId]?.room);
+    RedisClient.getInstance().unsubscribe(wsId, users[wsId]?.room);
   });
 });
 
