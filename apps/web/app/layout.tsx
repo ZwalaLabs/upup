@@ -1,28 +1,27 @@
 import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { Inter } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import Navbar from "../components/layout/navbar";
 import { authOptions } from "./api/auth/[...nextauth]/route";
 import "./globals.css";
 import Providers from "./providers";
 
-const inter = Inter({
+const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-montserrat",
 });
 
 export const metadata: Metadata = {
-  title: "upup - AMA app with upvotes",
+  title: "upup - Supereasy AMA sessions",
   description:
-    "upup is an AMA app with upvotes, but for live streamers of any kind. it allows you to answer the top upvoted questions from your audience.",
+    "upup is an AMA app with upvotes, for live streamers of any kind. it allows you to answer the top upvoted questions from your audience.",
   openGraph: {
-    title: "upup - AMA app with upvotes",
+    title: "upup - Supereasy AMA sessions",
     description:
-      "upup is an AMA app with upvotes for live streamers of any kind. it allows you to answer the top upvoted questions from your audience.",
+      "upup is an AMA app with upvotes, for live streamers of any kind. it allows you to answer the top upvoted questions from your audience.",
     url: "https://upupapp.xyz",
-    images: ["https://i.postimg.cc/YC2fWZJX/opengraph-image.png"],
   },
 };
 
@@ -34,7 +33,7 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <html className={inter.className} lang="en" suppressHydrationWarning>
+    <html className={montserrat.className} lang="en" suppressHydrationWarning>
       <body>
         <Providers session={session}>
           <Navbar />

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm generate && next dev",
+    "dev": "pnpm generate && next dev -p 3002",
     "build": "pnpm generate && next build",
     "start": "next start",
     "lint": "next lint",
@@ -22,6 +22,7 @@
     "bcrypt": "^5.1.1",
     "cryptr": "^6.3.0",
     "drizzle-orm": "^0.28.6",
+    "lucide-react": "^0.468.0",
     "next": "^13.4.19",
     "next-auth": "^4.24.4",
     "pg": "^8.11.3",
